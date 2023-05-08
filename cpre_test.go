@@ -75,3 +75,7 @@ func TestOnce(t *testing.T) {
 func TestNotOnce(t *testing.T) {
 	testPreprocess(t, "not_once")
 }
+
+func TestIfndef(t *testing.T) {
+	testPreprocess(t, "ifndef")
+}

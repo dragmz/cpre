@@ -365,7 +365,6 @@ func (s *state) process() string {
 					s.start = s.end
 					for s.end < len(s.s) {
 						r, w := utf8.DecodeRune(s.s[s.end:])
-						s.end += w
 
 						if r == '>' {
 							path = string(s.s[s.start:s.end])
