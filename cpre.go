@@ -1,10 +1,11 @@
 package cpre
 
 import (
-	"cpre/eval"
 	"strconv"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/dragmz/cpre/eval"
 )
 
 type blockKind int

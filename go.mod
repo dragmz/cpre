@@ -1,4 +1,4 @@
-module cpre
+module github.com/dragmz/cpre
 
 go 1.20
 
