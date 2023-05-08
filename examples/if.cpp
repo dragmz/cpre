@@ -33,3 +33,8 @@ const int F = 5;
 #if C
 const int G = 6;
 #endif
+
+#if 0
+#include "test.h"
+#pragma once
+#endif

@@ -204,6 +204,12 @@ func (s *state) process() string {
 
 			switch directive {
 			case "pragma":
+				if s.p.stack.skip {
+					s.readToEOL()
+					clear()
+					break
+				}
+
 				id := s.readID()
 
 				switch id {
@@ -213,6 +219,12 @@ func (s *state) process() string {
 				}
 
 			case "define":
+				if s.p.stack.skip {
+					s.readToEOL()
+					clear()
+					break
+				}
+
 				id := s.readID()
 
 				s.skipWhitespace()
@@ -257,6 +269,12 @@ func (s *state) process() string {
 				s.p.defines[id] = value
 				clear()
 			case "undef":
+				if s.p.stack.skip {
+					s.readToEOL()
+					clear()
+					break
+				}
+
 				id := s.readID()
 				delete(s.p.defines, id)
 				clear()
@@ -338,6 +356,12 @@ func (s *state) process() string {
 				s.p.pop()
 				clear()
 			case "include":
+				if s.p.stack.skip {
+					s.readToEOL()
+					clear()
+					break
+				}
+
 				s.skipWhitespace()
 
 				r, w := utf8.DecodeRune(s.s[s.end:])
