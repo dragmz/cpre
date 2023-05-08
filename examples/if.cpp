@@ -37,4 +37,8 @@ const int G = 6;
 #if 0
 #include "test.h"
 #pragma once
+// test comment
+/* test
+comment
+*/
 #endif

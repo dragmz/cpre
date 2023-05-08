@@ -429,6 +429,7 @@ func (s *state) process() string {
 				continue
 			}
 		case '/':
+			start := s.end
 			s.end += w
 			if s.end == len(s.s) {
 				break
@@ -452,6 +453,10 @@ func (s *state) process() string {
 						break
 					}
 				}
+				if s.p.stack.skip {
+					s.s = append(s.s[:start], s.s[s.end:]...)
+					s.end = start
+				}
 			case '*':
 				s.end += w
 
@@ -467,6 +472,10 @@ func (s *state) process() string {
 							break
 						}
 					}
+				}
+				if s.p.stack.skip {
+					s.s = append(s.s[:start], s.s[s.end:]...)
+					s.end = start
 				}
 			}
 		default:
