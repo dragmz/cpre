@@ -47,6 +47,29 @@ func NewPreprocessor(config PreprocessorConfig) *Preprocessor {
 	}
 }
 
+func (p *Preprocessor) Define(id, value string) {
+	p.defines[id] = value
+}
+
+func (p *Preprocessor) Undefine(id string) {
+	delete(p.defines, id)
+}
+
+func (p *Preprocessor) Process(source string) string {
+	source = strings.ReplaceAll(source, "\r\n", "\n")
+
+	bs := []byte(source)
+
+	s := &state{
+		p:     p,
+		s:     bs,
+		start: 0,
+		end:   0,
+	}
+
+	return s.process()
+}
+
 func (p *Preprocessor) push() *block {
 	previous := p.stack
 
@@ -72,21 +95,6 @@ type state struct {
 	end   int
 
 	once bool
-}
-
-func (p *Preprocessor) Process(source string) string {
-	source = strings.ReplaceAll(source, "\r\n", "\n")
-
-	bs := []byte(source)
-
-	s := &state{
-		p:     p,
-		s:     bs,
-		start: 0,
-		end:   0,
-	}
-
-	return s.process()
 }
 
 func (p *state) skipWhitespace() {
