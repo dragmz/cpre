@@ -2,12 +2,6 @@ package eval
 
 import "unicode/utf8"
 
-type lexer struct {
-	s     []byte
-	start int
-	end   int
-}
-
 type TokenKind int
 
 const (
@@ -18,6 +12,7 @@ const (
 	TokenKindRightParen
 	TokenKindAnd
 	TokenKindOr
+	TokenKindEquals
 	TokenKindOther
 )
 
@@ -27,6 +22,15 @@ type Token struct {
 	End   int
 }
 
+type lexer struct {
+	s     []byte
+	start int
+	end   int
+
+	ts []Token
+	i  int
+}
+
 func NewLexer(source []byte) *lexer {
 	return &lexer{
 		s: source,
@@ -34,6 +38,34 @@ func NewLexer(source []byte) *lexer {
 }
 
 func (l *lexer) Read() Token {
+	t := l.Peek()
+
+	if t.Kind != TokenKindNone {
+		l.i++
+	}
+
+	return t
+}
+
+func (l *lexer) Peek() Token {
+	if l.i >= len(l.ts) {
+		t := l.read()
+
+		if t.Kind != TokenKindNone {
+			l.ts = append(l.ts, t)
+		}
+	}
+
+	if l.i >= len(l.ts) {
+		return Token{}
+	}
+
+	t := l.ts[l.i]
+
+	return t
+}
+
+func (l *lexer) read() Token {
 	l.skipWhitespace()
 
 	if l.end >= len(l.s) {
@@ -76,6 +108,23 @@ func (l *lexer) Read() Token {
 
 			return Token{
 				Kind:  TokenKindOr,
+				Start: start,
+				End:   l.end,
+			}
+		}
+	}
+
+	// Inside lexer's Read() function
+	if r == '=' && l.end+w < len(l.s) {
+		r2, w2 := utf8.DecodeRune(l.s[l.end+w:])
+		if r2 == '=' {
+			l.end += w + w2
+
+			start := l.start
+			l.start = l.end
+
+			return Token{
+				Kind:  TokenKindEquals,
 				Start: start,
 				End:   l.end,
 			}

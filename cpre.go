@@ -1,11 +1,14 @@
 package cpre
 
 import (
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"unicode/utf8"
 
 	"github.com/dragmz/cpre/eval"
+	"github.com/pkg/errors"
 )
 
 type blockKind int
@@ -35,6 +38,32 @@ type Preprocessor struct {
 
 type PreprocessorConfig struct {
 	Include Includer
+}
+
+func NewIncluder(paths []string) Includer {
+	return func(name string, global bool) (string, []byte, error) {
+		for _, dir := range paths {
+			ip := filepath.Join(dir, name)
+
+			id, err := filepath.Abs(ip)
+			if err != nil {
+				return "", nil, errors.Wrapf(err, "failed to resolve #include file: '%s'", name)
+			}
+
+			bs, err := os.ReadFile(ip)
+			if os.IsNotExist(err) {
+				continue
+			}
+
+			if err != nil {
+				return "", nil, errors.Wrapf(err, "failed to read #include file: '%s'", name)
+			}
+
+			return id, bs, nil
+		}
+
+		return "", nil, errors.Errorf("failed to find #include file: '%s'", name)
+	}
 }
 
 func NewPreprocessor(config PreprocessorConfig) *Preprocessor {
@@ -175,6 +204,11 @@ func (p *state) readToEOL() string {
 func (s *state) process() string {
 	bol := true
 
+	clearFromTo := func(from, to int) {
+		s.s = append(s.s[:from], s.s[to:]...)
+		s.end = from
+	}
+
 	for s.end < len(s.s) {
 		r, w := utf8.DecodeRune(s.s[s.end:])
 
@@ -194,8 +228,7 @@ func (s *state) process() string {
 			}
 
 			clear := func() {
-				s.s = append(s.s[:start], s.s[s.end:]...)
-				s.end = start
+				clearFromTo(start, s.end)
 			}
 
 			s.skipWhitespace()
@@ -454,8 +487,7 @@ func (s *state) process() string {
 					}
 				}
 				if s.p.stack.skip {
-					s.s = append(s.s[:start], s.s[s.end:]...)
-					s.end = start
+					clearFromTo(start, s.end)
 				}
 			case '*':
 				s.end += w
@@ -474,16 +506,14 @@ func (s *state) process() string {
 					}
 				}
 				if s.p.stack.skip {
-					s.s = append(s.s[:start], s.s[s.end:]...)
-					s.end = start
+					clearFromTo(start, s.end)
 				}
 			}
 		default:
 			if s.p.stack.skip {
 				s.start = s.end
 				s.readToEOL()
-				s.s = append(s.s[:s.start], s.s[s.end:]...)
-				s.end = s.start
+				clearFromTo(s.start, s.end)
 			} else {
 				s.start = s.end
 				s.end += w
